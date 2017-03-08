@@ -554,6 +554,8 @@ def list_display(request):
             aips.append(aip)
 
     total_size = total_size_of_aips(es_client)
+    # Find out which AIPs are encrypted
+    aips = _add_encrypted(aips)
 
     return render(request, 'archival_storage/list.html',
                   {
@@ -564,6 +566,38 @@ def list_display(request):
                       'search_params': sort_params,
                   }
                   )
+
+
+def _add_encrypted(aips):
+    """Return the ``aips`` list of dicts, adding an 'encrypted' boolean key to
+    each AIP dict indicating whether the AIP is stored encrypted. This is
+    accomplished by making two new requests to the storage service to get the
+    list of locations and spaces and using that information to determine the
+    space of each AIP and whether the AIP is encrypted.
+    """
+    aip_storage_locs = storage_service.get_location(purpose="AS")
+    spaces = storage_service.get_space()
+    for aip in aips:
+        aip['encrypted'] = False
+        location = None
+        space = None
+        file_path = aip['filePath']
+        for loc in aip_storage_locs:
+            loc_path = loc['path']
+            if file_path.startswith(loc_path) and file_path.replace(
+                    loc_path, '', 1).startswith('/'):
+                location = loc
+        if not location:
+            continue
+        for spc in spaces:
+            if spc['uuid'] in location['space']:
+                space = spc
+                break
+        if not space:
+            continue
+        if space['access_protocol'] == 'GPG':
+            aip['encrypted'] = True
+    return aips
 
 
 def document_json_response(document_id_modified, type):
