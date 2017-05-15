@@ -96,11 +96,11 @@
       <tbody>
         {% for item in aips %}
           <tr>
-              {% if item.encrypted %}
-                <td><a href="{% url 'view_aip' item.uuid %}">{{ item.name }} (encrypted)</a></td>
-              {% else %}
-                <td><a href="{% url 'view_aip' item.uuid %}">{{ item.name }}</a></td>
-              {% endif %}
+            {% if item.encrypted %}
+              <td><a href="{% url 'view_aip' item.uuid %}">{% blocktrans with aip_name=item.name %}{{ aip_name }} (encrypted){% endblocktrans %}</a></td>
+            {% else %}
+              <td><a href="{% url 'view_aip' item.uuid %}">{{ item.name }}</a></td>
+            {% endif %}
             <td class="size">{{ item.size }}</td>
             <td class="uuid"><a href="{% url 'view_aip' item.uuid %}">{{ item.uuid }}</a></td>
             <td><span class="timestamp">{{ item.date }}</span></td>
